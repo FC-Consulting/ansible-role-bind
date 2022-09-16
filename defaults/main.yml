@@ -1,0 +1,4 @@
+---
+domain: "domain.tld"
+bind_owner: root
+bind_group: bind

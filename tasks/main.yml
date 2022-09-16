@@ -1,0 +1,66 @@
+---
+- name: Ensure bind9 packages is installed
+  package:
+    name: "{{ package }}"
+    state: present
+  register: install_bind9
+  until: install_bind9 is succeeded
+  retries: 3
+
+- name: Create ddnskey
+  shell: |
+    mkdir /root/ddns
+    tsig-keygen -a hmac-md5 ddnskey > /root/ddns/tsig.txt
+
+- name: Get ddnskey
+  shell: |
+    cat /root/ddns/tsig.txt
+  register: bind_ddnskey
+
+- name: Install config file
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/bind/{{ item }}"
+  loop:
+    - named.conf
+    - named.conf.log
+    - named.conf.options
+    - named.conf.zones
+
+- name: Path Bind zones exist
+  file:
+    path: /var/bind
+    state: directory
+    owner: "{{ bind_owner }}"
+    group: "{{ bind_group }}"
+    mode: 0774
+
+- name: Path Bind logs exist
+  file:
+    path: /var/log/named
+    state: directory
+    owner: "{{ bind_owner }}"
+    group: "{{ bind_group }}"
+    mode: 0774
+
+- name: Create zone file
+  template:
+    src: zone.j2
+    dest:  /var/bind/{{ domain }}.zone
+    owner: "{{ bind_owner }}"
+    group: "{{ bind_group }}"
+    mode: 0774
+  notify: bind9_restart
+
+- name: Install resolv.conf file
+  template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: bind9_openRC
+  shell: |
+    rc-update add named
+  when: package[0] == "Alpine"

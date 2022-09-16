@@ -1,0 +1,33 @@
+---
+_package:
+  default:
+    - bind9
+  Alpine:
+    - bind
+  Debian:
+    - bind9
+  CentOS-7:
+    - bind9
+  CentOS:
+    - bind9
+  RedHat:
+    - bind9
+
+_service:
+  default:
+    - bind9
+  Alpine:
+    - named
+  Debian:
+    - bind9
+  CentOS-7:
+    - bind9
+  CentOS:
+    - bind9
+  RedHat:
+    - bind9
+
+package: "{{ _package[ansible_distribution ~ '-' ~ ansible_distribution_major_version] | default(_package[ansible_distribution] | default(_package[ansible_os_family] | default (_package['default']))) }}"
+service: "{{ _service[ansible_distribution ~ '-' ~ ansible_distribution_major_version] | default(_service[ansible_distribution] | default(_service[ansible_os_family] | default (_service['default']))) }}"
+
+ansible_managed: "This file is managed by Ansible"
